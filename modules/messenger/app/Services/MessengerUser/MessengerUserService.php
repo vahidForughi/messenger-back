@@ -20,8 +20,8 @@ class MessengerUserService
             ->orderBy('latest_message', 'desc')
             ->paginate(15);
 
-        $usersIDs = $last_messages->pluck('to_id')
-            ->merge($last_messages->pluck('from_id'))
+        $usersIDs = $last_messages->select('from_id', 'to_id')
+            ->flatten()
             ->unique()
             ->toArray();
 
@@ -34,7 +34,10 @@ class MessengerUserService
         )
         ->whereIn('id', $usersIDs)
         ->withLastMessage($userID)
-        ->get();
+        ->get()
+        ->sortBy(fn ($user) =>
+            array_search($user->id, $usersIDs, false)
+        );
     }
 
     public function fetch(
